@@ -77,6 +77,11 @@ class AlarmService {
     debugPrint('AlarmService: Snoozed id=$id for $minutes minutes');
   }
 
+  /// Returns alarms that are currently set (possibly ringing).
+  static Future<List<AlarmSettings>> getActiveAlarms() {
+    return Alarm.getAlarms();
+  }
+
   // ignore: deprecated_member_use
   static Stream<AlarmSettings> get ringStream => Alarm.ringStream.stream;
 }

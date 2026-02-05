@@ -1,3 +1,4 @@
+import 'package:alarm/alarm.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -35,11 +36,29 @@ class _SharedAlarmAppState extends ConsumerState<SharedAlarmApp> {
 
   void _listenAlarmRing() {
     AlarmService.ringStream.listen((alarmSettings) {
-      final router = ref.read(routerProvider);
-      router.push(
-        '/alarm-ringing/${alarmSettings.id}?label=${Uri.encodeComponent(alarmSettings.notificationSettings.title)}',
-      );
+      _navigateToRinging(alarmSettings);
     });
+
+    // Check if an alarm is already ringing (app opened from full-screen intent)
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      final active = await AlarmService.getActiveAlarms();
+      if (active.isNotEmpty) {
+        final alarm = active.first;
+        // If alarm dateTime is in the past or within 5 seconds, it's ringing now
+        if (alarm.dateTime.isBefore(DateTime.now().add(const Duration(seconds: 5)))) {
+          _navigateToRinging(alarm);
+        }
+      }
+    });
+  }
+
+  void _navigateToRinging(AlarmSettings alarmSettings) {
+    final router = ref.read(routerProvider);
+    final currentLocation = router.routerDelegate.currentConfiguration.last.matchedLocation;
+    if (currentLocation.startsWith('/alarm-ringing')) return; // already there
+    router.push(
+      '/alarm-ringing/${alarmSettings.id}?label=${Uri.encodeComponent(alarmSettings.notificationSettings.title)}',
+    );
   }
 
   @override

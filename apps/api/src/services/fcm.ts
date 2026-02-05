@@ -18,11 +18,19 @@ async function ensureInitialized(): Promise<boolean> {
     return false;
   }
 
-  // Option B: JSON content directly in env var (ideal for Dokploy/Docker)
+  // Option B: env var - supports raw JSON or base64-encoded JSON
   const jsonContent = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (jsonContent) {
     try {
-      const serviceAccount = JSON.parse(jsonContent);
+      let parsed: string;
+      try {
+        parsed = jsonContent.trimStart().startsWith("{")
+          ? jsonContent
+          : Buffer.from(jsonContent, "base64").toString("utf-8");
+      } catch {
+        parsed = jsonContent;
+      }
+      const serviceAccount = JSON.parse(parsed);
       firebaseAdmin.initializeApp({
         credential: firebaseAdmin.credential.cert(serviceAccount),
       });

@@ -19,21 +19,28 @@ FROM build-shared AS build-web
 COPY apps/web/ apps/web/
 RUN bun run --filter @shared-alarm/web build
 
-# Build API
-FROM build-shared AS build-api
-COPY apps/api/ apps/api/
-RUN bun build apps/api/src/index.ts --outdir apps/api/dist --target bun
-
 # Production image
 FROM oven/bun:1.2-slim AS production
 WORKDIR /app
 
-COPY --from=build-api /app/apps/api/dist/ ./dist/
-COPY --from=build-api /app/apps/api/drizzle/ ./drizzle/
-COPY --from=build-web /app/apps/web/dist/ ./public/
+# Copy node_modules (needed for firebase-admin native deps)
+COPY --from=deps /app/node_modules/ ./node_modules/
+
+# Copy shared package
+COPY --from=build-shared /app/packages/shared/ ./packages/shared/
+
+# Copy API source + drizzle migrations
+COPY apps/api/src/ ./apps/api/src/
+COPY apps/api/drizzle/ ./apps/api/drizzle/
+COPY apps/api/package.json ./apps/api/
+COPY apps/api/tsconfig.json ./apps/api/
+COPY tsconfig.json ./
+
+# Copy built web app as static files into the API working dir
+COPY --from=build-web /app/apps/web/dist/ ./apps/api/public/
 
 # Create data directory for SQLite
-RUN mkdir -p /app/data
+RUN mkdir -p /app/apps/api/data
 
 ENV NODE_ENV=production
 ENV PORT=3001
@@ -41,4 +48,5 @@ ENV DATABASE_URL=./data/shared-alarm.db
 
 EXPOSE 3001
 
-CMD ["bun", "run", "dist/index.js"]
+WORKDIR /app/apps/api
+CMD ["bun", "run", "src/index.ts"]

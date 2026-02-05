@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../providers/alarm_provider.dart';
+import '../providers/locale_provider.dart';
 import '../models/alarm.dart';
 import 'package:intl/intl.dart';
 
@@ -20,15 +22,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     Future.microtask(() => ref.read(alarmListProvider.notifier).loadAlarms());
   }
 
+  void _showLanguageDialog() {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(l10n.language),
+        children: [
+          SimpleDialogOption(
+            onPressed: () {
+              ref.read(localeProvider.notifier).clearLocale();
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.systemDefault),
+          ),
+          SimpleDialogOption(
+            onPressed: () {
+              ref.read(localeProvider.notifier).setLocale(const Locale('en'));
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.english),
+          ),
+          SimpleDialogOption(
+            onPressed: () {
+              ref.read(localeProvider.notifier).setLocale(const Locale('es'));
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.spanish),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(authProvider);
     final alarmState = ref.watch(alarmListProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Alarms'),
+        title: Text(l10n.myAlarms),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: _showLanguageDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => ref.read(authProvider.notifier).logout(),
@@ -46,17 +86,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => ref.read(alarmListProvider.notifier).loadAlarms(),
-                        child: const Text('Retry'),
+                        child: Text(l10n.retry),
                       ),
                     ],
                   ),
                 )
               : alarmState.alarms.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
-                        'No alarms yet.\nTap + to create one.',
+                        l10n.noAlarmsYet,
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                        style: const TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     )
                   : RefreshIndicator(
@@ -96,8 +136,22 @@ class _AlarmCard extends StatelessWidget {
     }
   }
 
+  String _statusLabel(AppLocalizations l10n) {
+    switch (alarm.status) {
+      case 'active':
+        return l10n.statusActive;
+      case 'triggered':
+        return l10n.statusTriggered;
+      case 'cancelled':
+        return l10n.statusCancelled;
+      default:
+        return alarm.status.toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final targetDate = DateTime.parse(alarm.targetTime).toLocal();
     final formatter = DateFormat('MMM d, y HH:mm');
 
@@ -127,7 +181,7 @@ class _AlarmCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                alarm.status.toUpperCase(),
+                _statusLabel(l10n),
                 style: TextStyle(color: _statusColor, fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),

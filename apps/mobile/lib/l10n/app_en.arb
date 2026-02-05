@@ -1,0 +1,67 @@
+{
+  "@@locale": "en",
+  "appTitle": "Shared Alarm",
+  "email": "Email",
+  "password": "Password",
+  "login": "Login",
+  "noAccountRegister": "Don't have an account? Register",
+  "createAccount": "Create Account",
+  "displayName": "Display Name",
+  "passwordMinChars": "Password (min 8 characters)",
+  "register": "Register",
+  "alreadyHaveAccount": "Already have an account? Login",
+  "myAlarms": "My Alarms",
+  "retry": "Retry",
+  "noAlarmsYet": "No alarms yet.\nTap + to create one.",
+  "createAlarm": "Create Alarm",
+  "alarmLabel": "Alarm Label",
+  "targetDateTime": "Target Date & Time",
+  "minExtensionMinutes": "Min Extension (minutes)",
+  "pleaseEnterLabel": "Please enter a label",
+  "targetTimeFuture": "Target time must be in the future",
+  "failedCreateAlarm": "Failed to create alarm",
+  "alarmDetail": "Alarm Detail",
+  "alarmNotFound": "Alarm not found",
+  "cancelAlarm": "Cancel Alarm",
+  "cancelAlarmConfirm": "Are you sure you want to cancel this alarm?",
+  "no": "No",
+  "yesCancel": "Yes, Cancel",
+  "alarmTriggered": "ALARM TRIGGERED!",
+  "alarmCancelled": "Alarm Cancelled",
+  "minExtensionInfo": "Min Extension: {minutes} min",
+  "@minExtensionInfo": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "shareToken": "Share Token: {token}",
+  "@shareToken": {
+    "placeholders": {
+      "token": { "type": "String" }
+    }
+  },
+  "extensions": "Extensions",
+  "shareThisAlarm": "Share this alarm",
+  "targetLabel": "Target: {date}",
+  "@targetLabel": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "shareAlarmMessage": "Extend my alarm \"{label}\": {url}",
+  "@shareAlarmMessage": {
+    "placeholders": {
+      "label": { "type": "String" },
+      "url": { "type": "String" }
+    }
+  },
+  "statusActive": "ACTIVE",
+  "statusTriggered": "TRIGGERED",
+  "statusCancelled": "CANCELLED",
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied to clipboard",
+  "language": "Language",
+  "english": "English",
+  "spanish": "Spanish",
+  "systemDefault": "System default"
+}

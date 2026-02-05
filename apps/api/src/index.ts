@@ -1,18 +1,22 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { serveStatic } from "hono/bun";
 import auth from "./routes/auth";
 import alarmsRoute from "./routes/alarms";
 import share, { setWsBroadcast } from "./routes/share";
+import push from "./routes/push";
 import { wsRoute, websocket, broadcast } from "./services/ws";
-import { setBroadcast, loadActiveAlarms } from "./services/scheduler";
+import { setBroadcast, setPushFn, loadActiveAlarms } from "./services/scheduler";
+import { sendAlarmTriggeredPush } from "./services/push";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { db } from "./db";
 
 const app = new Hono();
+const isProd = process.env.NODE_ENV === "production";
 
 const corsOrigins = (
-  process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:3000"
+  process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:3000,http://localhost:8080"
 ).split(",");
 
 app.use("*", logger());
@@ -28,13 +32,21 @@ app.use(
 app.route("/auth", auth);
 app.route("/alarms", alarmsRoute);
 app.route("/share", share);
+app.route("/push", push);
 app.route("/ws", wsRoute);
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
-// Wire up WebSocket broadcasting
+// In production, serve the web app static files
+if (isProd) {
+  app.use("/*", serveStatic({ root: "./public" }));
+  app.get("/*", serveStatic({ path: "./public/index.html" }));
+}
+
+// Wire up WebSocket broadcasting and push notifications
 setWsBroadcast(broadcast);
 setBroadcast(broadcast);
+setPushFn(sendAlarmTriggeredPush);
 
 // Run migrations and load active alarms on startup
 try {

@@ -12,3 +12,14 @@ data/
 .DS_Store
 coverage/
 .vite/
+
+# Flutter
+apps/mobile/.dart_tool/
+apps/mobile/build/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+
+# Android signing
+apps/mobile/android/key.properties
+*.jks
+*.keystore

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { AlarmPublic, Extension } from "@shared-alarm/shared";
 
 interface AlarmState {
@@ -15,10 +15,15 @@ export function useAlarm(token: string) {
     loading: true,
     error: null,
   });
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchAlarm = useCallback(async () => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
-      const res = await fetch(`/api/share/${token}`);
+      const res = await fetch(`/api/share/${token}`, { signal: controller.signal });
       if (!res.ok) {
         const err = await res.json();
         setState((s) => ({ ...s, loading: false, error: err.message || "Failed to load alarm" }));
@@ -26,13 +31,16 @@ export function useAlarm(token: string) {
       }
       const data = await res.json();
       setState({ alarm: data.alarm, extensions: data.extensions, loading: false, error: null });
-    } catch {
-      setState((s) => ({ ...s, loading: false, error: "Network error" }));
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") {
+        setState((s) => ({ ...s, loading: false, error: "Network error" }));
+      }
     }
   }, [token]);
 
   useEffect(() => {
     fetchAlarm();
+    return () => abortRef.current?.abort();
   }, [fetchAlarm]);
 
   const updateAlarm = useCallback((alarm: AlarmPublic, newExtension?: Extension) => {

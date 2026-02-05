@@ -3,12 +3,18 @@ import { db } from "../db";
 import { alarms } from "../db/schema";
 
 type BroadcastFn = (alarmId: string, data: unknown) => void;
+type PushFn = (alarmId: string) => Promise<void>;
 
 const timers = new Map<string, Timer>();
 let broadcastFn: BroadcastFn | null = null;
+let pushFn: PushFn | null = null;
 
 export function setBroadcast(fn: BroadcastFn): void {
   broadcastFn = fn;
+}
+
+export function setPushFn(fn: PushFn): void {
+  pushFn = fn;
 }
 
 export function scheduleAlarm(alarmId: string, targetTime: string): void {
@@ -46,17 +52,25 @@ async function triggerAlarm(alarmId: string): Promise<void> {
     .where(eq(alarms.id, alarmId))
     .returning();
 
-  if (alarm && broadcastFn) {
-    broadcastFn(alarmId, {
-      type: "alarm_triggered",
-      data: {
-        id: alarm.id,
-        targetTime: alarm.targetTime,
-        minExtensionMinutes: alarm.minExtensionMinutes,
-        label: alarm.label,
-        status: alarm.status,
-      },
-    });
+  if (alarm) {
+    if (broadcastFn) {
+      broadcastFn(alarmId, {
+        type: "alarm_triggered",
+        data: {
+          id: alarm.id,
+          targetTime: alarm.targetTime,
+          minExtensionMinutes: alarm.minExtensionMinutes,
+          label: alarm.label,
+          status: alarm.status,
+        },
+      });
+    }
+
+    if (pushFn) {
+      pushFn(alarmId).catch((e) =>
+        console.error("Push notification failed:", e)
+      );
+    }
   }
 }
 

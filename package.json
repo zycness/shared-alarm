@@ -11,7 +11,9 @@
     "db:migrate": "bun run --filter @shared-alarm/api db:migrate",
     "db:push": "bun run --filter @shared-alarm/api db:push"
   },
+  "packageManager": "bun@1.2.16",
   "devDependencies": {
+    "@types/web-push": "^3.6.4",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0"
   }

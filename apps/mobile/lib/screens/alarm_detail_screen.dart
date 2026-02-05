@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/alarm_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/alarm.dart';
@@ -85,20 +87,22 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
 
   void _shareAlarm() {
     if (_alarm == null) return;
+    final l10n = AppLocalizations.of(context)!;
     final api = ref.read(apiServiceProvider);
     final url = api.getShareUrl(_alarm!.shareToken);
-    Share.share('Extend my alarm "${_alarm!.label}": $url');
+    Share.share(l10n.shareAlarmMessage(_alarm!.label, url));
   }
 
   Future<void> _cancelAlarm() async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Alarm'),
-        content: const Text('Are you sure you want to cancel this alarm?'),
+        title: Text(l10n.cancelAlarm),
+        content: Text(l10n.cancelAlarmConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes, Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.no)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.yesCancel)),
         ],
       ),
     );
@@ -120,17 +124,19 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Alarm Detail')),
+        appBar: AppBar(title: Text(l10n.alarmDetail)),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_alarm == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Alarm Detail')),
-        body: const Center(child: Text('Alarm not found')),
+        appBar: AppBar(title: Text(l10n.alarmDetail)),
+        body: Center(child: Text(l10n.alarmNotFound)),
       );
     }
 
@@ -173,7 +179,7 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  alarm.status.toUpperCase(),
+                  alarm.isActive ? l10n.statusActive : alarm.isTriggered ? l10n.statusTriggered : l10n.statusCancelled,
                   style: TextStyle(
                     color: alarm.isActive ? Colors.green : alarm.isTriggered ? Colors.red : Colors.grey,
                     fontWeight: FontWeight.bold,
@@ -195,7 +201,7 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Target: ${formatter.format(targetLocal)}',
+                  l10n.targetLabel(formatter.format(targetLocal)),
                   style: const TextStyle(color: Colors.grey),
                 ),
               ),
@@ -204,17 +210,17 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
                 child: Icon(Icons.alarm_on, size: 80, color: Colors.red),
               ),
               const SizedBox(height: 16),
-              const Center(
+              Center(
                 child: Text(
-                  'ALARM TRIGGERED!',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red),
+                  l10n.alarmTriggered,
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red),
                 ),
               ),
             ] else ...[
-              const Center(
+              Center(
                 child: Text(
-                  'Alarm Cancelled',
-                  style: TextStyle(fontSize: 20, color: Colors.grey),
+                  l10n.alarmCancelled,
+                  style: const TextStyle(fontSize: 20, color: Colors.grey),
                 ),
               ),
             ],
@@ -228,10 +234,10 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Min Extension: ${alarm.minExtensionMinutes} min',
+                    Text(l10n.minExtensionInfo(alarm.minExtensionMinutes),
                         style: const TextStyle(fontSize: 14)),
                     const SizedBox(height: 8),
-                    Text('Share Token: ${alarm.shareToken}',
+                    Text(l10n.shareToken(alarm.shareToken),
                         style: const TextStyle(fontSize: 14, color: Colors.grey)),
                   ],
                 ),
@@ -241,8 +247,8 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
             // Extensions
             if (alarm.extensions != null && alarm.extensions!.isNotEmpty) ...[
               const SizedBox(height: 24),
-              const Text('Extensions',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(l10n.extensions,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               ...alarm.extensions!.map((ext) => Card(
                     margin: const EdgeInsets.only(bottom: 8),
@@ -263,13 +269,37 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
 
             if (alarm.isActive) ...[
               const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: _shareAlarm,
-                icon: const Icon(Icons.share),
-                label: const Text('Share this alarm'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _shareAlarm,
+                      icon: const Icon(Icons.share),
+                      label: Text(l10n.shareThisAlarm),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final api = ref.read(apiServiceProvider);
+                        final url = api.getShareUrl(alarm.shareToken);
+                        Clipboard.setData(ClipboardData(text: url));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(l10n.linkCopied)),
+                        );
+                      },
+                      icon: const Icon(Icons.copy),
+                      label: Text(l10n.copyLink),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ],

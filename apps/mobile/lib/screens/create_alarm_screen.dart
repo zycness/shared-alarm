@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/alarm_provider.dart';
 
 class CreateAlarmScreen extends ConsumerStatefulWidget {
@@ -49,8 +50,10 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
   }
 
   Future<void> _create() async {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_labelController.text.trim().isEmpty) {
-      setState(() => _error = 'Please enter a label');
+      setState(() => _error = l10n.pleaseEnterLabel);
       return;
     }
 
@@ -63,7 +66,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
     );
 
     if (target.isBefore(DateTime.now())) {
-      setState(() => _error = 'Target time must be in the future');
+      setState(() => _error = l10n.targetTimeFuture);
       return;
     }
 
@@ -82,15 +85,17 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
     } catch (e) {
       setState(() {
         _submitting = false;
-        _error = 'Failed to create alarm';
+        _error = l10n.failedCreateAlarm;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Alarm')),
+      appBar: AppBar(title: Text(l10n.createAlarm)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -98,14 +103,14 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
           children: [
             TextField(
               controller: _labelController,
-              decoration: const InputDecoration(
-                labelText: 'Alarm Label',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.label),
+              decoration: InputDecoration(
+                labelText: l10n.alarmLabel,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.label),
               ),
             ),
             const SizedBox(height: 24),
-            const Text('Target Date & Time', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.targetDateTime, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -129,7 +134,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            const Text('Min Extension (minutes)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l10n.minExtensionMinutes, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -167,7 +172,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : const Text('Create Alarm', style: TextStyle(fontSize: 16)),
+                  : Text(l10n.createAlarm, style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),

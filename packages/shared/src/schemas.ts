@@ -20,7 +20,7 @@ export const LoginRequest = z.object({
 export type LoginRequest = z.infer<typeof LoginRequest>;
 
 export const CreateAlarmRequest = z.object({
-  targetTime: z.string().datetime(),
+  targetTime: z.string().datetime({ offset: true }),
   minExtensionMinutes: z.number().int().min(1).max(1440),
   label: z.string().min(1).max(200),
 });

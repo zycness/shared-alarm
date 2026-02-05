@@ -25,10 +25,11 @@ export function SharePage({ token }: SharePageProps) {
           data.extension
         );
       } else if (msg.type === "alarm_triggered") {
-        updateAlarm({ ...(alarm as AlarmPublic), status: "triggered" });
+        const data = msg.data as AlarmPublic;
+        updateAlarm({ ...data, status: "triggered" });
       }
     },
-    [alarm, updateAlarm]
+    [updateAlarm]
   );
 
   useWebSocket(alarm?.id ?? null, handleWsMessage);

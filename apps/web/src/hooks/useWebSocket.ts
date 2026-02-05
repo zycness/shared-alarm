@@ -1,41 +1,48 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import type { WsMessage } from "@shared-alarm/shared";
 
 export function useWebSocket(
   alarmId: string | null,
   onMessage: (msg: WsMessage) => void
 ) {
-  const wsRef = useRef<WebSocket | null>(null);
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
 
-  const connect = useCallback(() => {
+  useEffect(() => {
     if (!alarmId) return;
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/${alarmId}`);
+    let disposed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout>;
+    let ws: WebSocket;
 
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data) as WsMessage;
-        onMessageRef.current(msg);
-      } catch {
-        // ignore malformed messages
-      }
-    };
+    function connect() {
+      if (disposed) return;
 
-    ws.onclose = () => {
-      // Reconnect after 3 seconds
-      setTimeout(connect, 3000);
-    };
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      ws = new WebSocket(`${protocol}//${window.location.host}/ws/${alarmId}`);
 
-    wsRef.current = ws;
-  }, [alarmId]);
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data) as WsMessage;
+          onMessageRef.current(msg);
+        } catch {
+          // ignore malformed messages
+        }
+      };
 
-  useEffect(() => {
+      ws.onclose = () => {
+        if (!disposed) {
+          reconnectTimer = setTimeout(connect, 3000);
+        }
+      };
+    }
+
     connect();
+
     return () => {
-      wsRef.current?.close();
+      disposed = true;
+      clearTimeout(reconnectTimer);
+      ws?.close();
     };
-  }, [connect]);
+  }, [alarmId]);
 }

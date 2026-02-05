@@ -1,19 +1,37 @@
-import admin from "firebase-admin";
 import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { fcmTokens, alarms } from "../db/schema";
 
 let initialized = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let firebaseAdmin: any = null;
 
-function getServiceAccount(): admin.ServiceAccount | null {
+async function ensureInitialized(): Promise<boolean> {
+  if (initialized) return true;
+
+  // Dynamic import to avoid crashing the server if firebase-admin has issues
+  try {
+    const mod = await import("firebase-admin");
+    firebaseAdmin = mod.default;
+  } catch (error) {
+    console.warn("FCM: firebase-admin not available, FCM disabled:", error);
+    return false;
+  }
+
   // Option B: JSON content directly in env var (ideal for Dokploy/Docker)
   const jsonContent = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (jsonContent) {
     try {
-      return JSON.parse(jsonContent) as admin.ServiceAccount;
+      const serviceAccount = JSON.parse(jsonContent);
+      firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.cert(serviceAccount),
+      });
+      initialized = true;
+      console.log("FCM: Firebase Admin initialized (from env var)");
+      return true;
     } catch (error) {
-      console.error("FCM: Failed to parse FIREBASE_SERVICE_ACCOUNT:", error);
-      return null;
+      console.error("FCM: Failed to init from FIREBASE_SERVICE_ACCOUNT:", error);
+      return false;
     }
   }
 
@@ -21,45 +39,30 @@ function getServiceAccount(): admin.ServiceAccount | null {
   const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (credPath) {
     try {
-      return require(
-        credPath.startsWith("/") ? credPath : `${process.cwd()}/${credPath}`
-      );
+      const fullPath = credPath.startsWith("/") ? credPath : `${process.cwd()}/${credPath}`;
+      const file = Bun.file(fullPath);
+      const serviceAccount = await file.json();
+      firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.cert(serviceAccount),
+      });
+      initialized = true;
+      console.log("FCM: Firebase Admin initialized (from file)");
+      return true;
     } catch (error) {
-      console.error("FCM: Failed to load credentials file:", error);
-      return null;
+      console.error("FCM: Failed to init from credentials file:", error);
+      return false;
     }
   }
 
-  return null;
-}
-
-function ensureInitialized(): boolean {
-  if (initialized) return true;
-
-  const serviceAccount = getServiceAccount();
-  if (!serviceAccount) {
-    console.warn("FCM: No credentials found (set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS)");
-    return false;
-  }
-
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-    initialized = true;
-    console.log("FCM: Firebase Admin initialized");
-    return true;
-  } catch (error) {
-    console.error("FCM: Failed to initialize Firebase Admin:", error);
-    return false;
-  }
+  console.warn("FCM: No credentials found (set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS)");
+  return false;
 }
 
 export async function sendFcmToUser(
   userId: string,
   payload: Record<string, string>
 ): Promise<void> {
-  if (!ensureInitialized()) return;
+  if (!(await ensureInitialized()) || !firebaseAdmin) return;
 
   const tokens = db
     .select()
@@ -71,7 +74,7 @@ export async function sendFcmToUser(
 
   const promises = tokens.map(async (tokenRow) => {
     try {
-      await admin.messaging().send({
+      await firebaseAdmin!.messaging().send({
         token: tokenRow.token,
         data: payload,
         android: {

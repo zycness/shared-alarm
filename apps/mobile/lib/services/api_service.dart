@@ -6,7 +6,7 @@ import '../models/alarm.dart';
 class ApiService {
   static const String _baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'http://10.0.2.2:3000',
+    defaultValue: 'https://alarm.kevdevelopment.com',
   );
 
   final Dio _dio;
@@ -111,6 +111,6 @@ class ApiService {
   }
 
   String getShareUrl(String shareToken) {
-    return 'http://localhost:5173/share/$shareToken';
+    return '$_baseUrl/share/$shareToken';
   }
 }

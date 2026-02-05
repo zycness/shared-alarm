@@ -19,6 +19,11 @@ apps/mobile/build/
 apps/mobile/.flutter-plugins
 apps/mobile/.flutter-plugins-dependencies
 
+# Firebase
+firebase-service-account.json
+google-services.json
+GoogleService-Info.plist
+
 # Android signing
 apps/mobile/android/key.properties
 *.jks

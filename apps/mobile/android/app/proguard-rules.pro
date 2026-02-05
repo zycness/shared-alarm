@@ -10,3 +10,7 @@
 -dontwarn com.google.android.play.core.splitcompat.**
 -dontwarn com.google.android.play.core.splitinstall.**
 -dontwarn com.google.android.play.core.tasks.**
+
+## Firebase
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**

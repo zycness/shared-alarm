@@ -17,6 +17,7 @@
     "@shared-alarm/shared": "workspace:*",
     "drizzle-orm": "^0.38.0",
     "hono": "^4.6.0",
+    "firebase-admin": "^13.0.0",
     "web-push": "^3.6.7",
     "zod": "^3.24.0"
   },

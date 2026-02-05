@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { eq, and } from "drizzle-orm";
+import { z } from "zod";
 import { PushSubscriptionRequest } from "@shared-alarm/shared";
 import { db } from "../db";
-import { pushSubscriptions } from "../db/schema";
+import { pushSubscriptions, fcmTokens } from "../db/schema";
 import { authMiddleware, getUserId } from "../lib/jwt";
 import { generateId } from "../lib/id";
 import { getVapidPublicKey } from "../services/push";
@@ -68,6 +69,62 @@ push.delete("/subscribe", authMiddleware, async (c) => {
 
   db.delete(pushSubscriptions)
     .where(eq(pushSubscriptions.userId, userId))
+    .run();
+
+  return c.json({ ok: true });
+});
+
+// --- FCM Token Management ---
+
+const FcmRegisterSchema = z.object({
+  token: z.string().min(1),
+  platform: z.enum(["android", "ios"]),
+});
+
+// Register FCM token (mobile devices)
+push.post(
+  "/fcm-register",
+  authMiddleware,
+  zValidator("json", FcmRegisterSchema),
+  async (c) => {
+    const userId = getUserId(c);
+    const { token, platform } = c.req.valid("json");
+
+    const existing = db
+      .select()
+      .from(fcmTokens)
+      .where(eq(fcmTokens.token, token))
+      .get();
+
+    if (existing) {
+      db.update(fcmTokens)
+        .set({ userId, platform })
+        .where(eq(fcmTokens.id, existing.id))
+        .run();
+      return c.json({ id: existing.id });
+    }
+
+    const id = generateId();
+    db.insert(fcmTokens)
+      .values({
+        id,
+        userId,
+        token,
+        platform,
+        createdAt: new Date().toISOString(),
+      })
+      .run();
+
+    return c.json({ id }, 201);
+  }
+);
+
+// Unregister FCM token
+push.delete("/fcm-register", authMiddleware, async (c) => {
+  const userId = getUserId(c);
+
+  db.delete(fcmTokens)
+    .where(eq(fcmTokens.userId, userId))
     .run();
 
   return c.json({ ok: true });

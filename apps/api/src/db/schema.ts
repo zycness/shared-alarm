@@ -49,9 +49,20 @@ export const pushSubscriptions = sqliteTable("push_subscriptions", {
   createdAt: text("created_at").notNull(),
 });
 
+export const fcmTokens = sqliteTable("fcm_tokens", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  token: text("token").notNull().unique(),
+  platform: text("platform", { enum: ["android", "ios"] }).notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   alarms: many(alarms),
   pushSubscriptions: many(pushSubscriptions),
+  fcmTokens: many(fcmTokens),
 }));
 
 export const alarmsRelations = relations(alarms, ({ one, many }) => ({
@@ -75,3 +86,10 @@ export const pushSubscriptionsRelations = relations(
     }),
   })
 );
+
+export const fcmTokensRelations = relations(fcmTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [fcmTokens.userId],
+    references: [users.id],
+  }),
+}));

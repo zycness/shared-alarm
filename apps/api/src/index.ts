@@ -7,8 +7,9 @@ import alarmsRoute from "./routes/alarms";
 import share, { setWsBroadcast } from "./routes/share";
 import push from "./routes/push";
 import { wsRoute, websocket, broadcast } from "./services/ws";
-import { setBroadcast, setPushFn, loadActiveAlarms } from "./services/scheduler";
+import { setBroadcast, setPushFn, setFcmFn, loadActiveAlarms } from "./services/scheduler";
 import { sendAlarmTriggeredPush } from "./services/push";
+import { sendAlarmTriggeredFcm } from "./services/fcm";
 import { migrate } from "drizzle-orm/bun-sqlite/migrator";
 import { db } from "./db";
 
@@ -50,6 +51,7 @@ if (isProd) {
 setWsBroadcast(broadcast);
 setBroadcast(broadcast);
 setPushFn(sendAlarmTriggeredPush);
+setFcmFn(sendAlarmTriggeredFcm);
 
 // Run migrations and load active alarms on startup
 try {

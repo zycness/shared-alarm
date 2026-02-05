@@ -113,4 +113,19 @@ class ApiService {
   String getShareUrl(String shareToken) {
     return '$_baseUrl/share/$shareToken';
   }
+
+  // FCM Token Management
+  Future<void> registerFcmToken({
+    required String token,
+    required String platform,
+  }) async {
+    await _dio.post('/api/push/fcm-register', data: {
+      'token': token,
+      'platform': platform,
+    });
+  }
+
+  Future<void> unregisterFcmToken() async {
+    await _dio.delete('/api/push/fcm-register');
+  }
 }

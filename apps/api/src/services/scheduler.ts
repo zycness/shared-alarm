@@ -4,10 +4,12 @@ import { alarms } from "../db/schema";
 
 type BroadcastFn = (alarmId: string, data: unknown) => void;
 type PushFn = (alarmId: string) => Promise<void>;
+type FcmFn = (alarmId: string) => Promise<void>;
 
 const timers = new Map<string, Timer>();
 let broadcastFn: BroadcastFn | null = null;
 let pushFn: PushFn | null = null;
+let fcmFn: FcmFn | null = null;
 
 export function setBroadcast(fn: BroadcastFn): void {
   broadcastFn = fn;
@@ -15,6 +17,10 @@ export function setBroadcast(fn: BroadcastFn): void {
 
 export function setPushFn(fn: PushFn): void {
   pushFn = fn;
+}
+
+export function setFcmFn(fn: FcmFn): void {
+  fcmFn = fn;
 }
 
 export function scheduleAlarm(alarmId: string, targetTime: string): void {
@@ -69,6 +75,12 @@ async function triggerAlarm(alarmId: string): Promise<void> {
     if (pushFn) {
       pushFn(alarmId).catch((e) =>
         console.error("Push notification failed:", e)
+      );
+    }
+
+    if (fcmFn) {
+      fcmFn(alarmId).catch((e) =>
+        console.error("FCM notification failed:", e)
       );
     }
   }

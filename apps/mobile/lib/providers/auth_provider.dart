@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 
 final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
 
@@ -37,6 +39,7 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final ApiService _api;
+  FcmService? _fcmService;
 
   AuthNotifier(this._api) : super(const AuthState()) {
     _checkAuth();
@@ -51,10 +54,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _api.getMe();
       state = state.copyWith(status: AuthStatus.authenticated, user: user);
+      _initFcm();
     } catch (_) {
       await _api.logout();
       state = state.copyWith(status: AuthStatus.unauthenticated);
     }
+  }
+
+  void _initFcm() {
+    _fcmService = FcmService(_api);
+    _fcmService!.initialize().catchError((e) {
+      debugPrint('FCM initialization error: $e');
+    });
   }
 
   Future<void> register({
@@ -74,6 +85,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: result.user,
         loading: false,
       );
+      _initFcm();
     } catch (e) {
       state = state.copyWith(
         loading: false,
@@ -94,6 +106,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         user: result.user,
         loading: false,
       );
+      _initFcm();
     } catch (e) {
       state = state.copyWith(
         loading: false,
@@ -103,6 +116,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    if (_fcmService != null) {
+      await _fcmService!.unregister();
+      _fcmService = null;
+    }
     await _api.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }

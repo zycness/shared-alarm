@@ -19,7 +19,7 @@ export function useWebSocket(
       if (disposed) return;
 
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      ws = new WebSocket(`${protocol}//${window.location.host}/ws/${alarmId}`);
+      ws = new WebSocket(`${protocol}//${window.location.host}/api/ws/${alarmId}`);
 
       ws.onmessage = (event) => {
         try {

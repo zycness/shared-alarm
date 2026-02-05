@@ -40,7 +40,7 @@ class ApiService {
     required String password,
     required String displayName,
   }) async {
-    final response = await _dio.post('/auth/register', data: {
+    final response = await _dio.post('/api/auth/register', data: {
       'email': email,
       'password': password,
       'displayName': displayName,
@@ -55,7 +55,7 @@ class ApiService {
     required String email,
     required String password,
   }) async {
-    final response = await _dio.post('/auth/login', data: {
+    final response = await _dio.post('/api/auth/login', data: {
       'email': email,
       'password': password,
     });
@@ -66,7 +66,7 @@ class ApiService {
   }
 
   Future<User> getMe() async {
-    final response = await _dio.get('/auth/me');
+    final response = await _dio.get('/api/auth/me');
     return User.fromJson(response.data['user'] as Map<String, dynamic>);
   }
 
@@ -85,7 +85,7 @@ class ApiService {
     required int minExtensionMinutes,
     required String label,
   }) async {
-    final response = await _dio.post('/alarms', data: {
+    final response = await _dio.post('/api/alarms', data: {
       'targetTime': targetTime,
       'minExtensionMinutes': minExtensionMinutes,
       'label': label,
@@ -94,19 +94,19 @@ class ApiService {
   }
 
   Future<List<Alarm>> getAlarms() async {
-    final response = await _dio.get('/alarms');
+    final response = await _dio.get('/api/alarms');
     return (response.data as List)
         .map((e) => Alarm.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
   Future<Alarm> getAlarm(String id) async {
-    final response = await _dio.get('/alarms/$id');
+    final response = await _dio.get('/api/alarms/$id');
     return Alarm.fromJson(response.data as Map<String, dynamic>);
   }
 
   Future<Alarm> cancelAlarm(String id) async {
-    final response = await _dio.delete('/alarms/$id');
+    final response = await _dio.delete('/api/alarms/$id');
     return Alarm.fromJson(response.data as Map<String, dynamic>);
   }
 

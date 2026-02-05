@@ -29,7 +29,7 @@ app.use(
   })
 );
 
-// Mount API routes at root (Flutter/direct) and /api (web app in production)
+// Mount API routes only under /api prefix
 const api = new Hono();
 api.route("/auth", auth);
 api.route("/alarms", alarmsRoute);
@@ -38,10 +38,9 @@ api.route("/push", push);
 api.route("/ws", wsRoute);
 api.get("/health", (c) => c.json({ status: "ok" }));
 
-app.route("/", api);
 app.route("/api", api);
 
-// In production, serve the web app static files
+// In production, serve the web app static files (SPA fallback for /share/:token etc.)
 if (isProd) {
   app.use("/*", serveStatic({ root: "./public" }));
   app.get("/*", serveStatic({ path: "./public/index.html" }));

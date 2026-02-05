@@ -1,0 +1,59 @@
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import auth from "./routes/auth";
+import alarmsRoute from "./routes/alarms";
+import share, { setWsBroadcast } from "./routes/share";
+import { wsRoute, websocket, broadcast } from "./services/ws";
+import { setBroadcast, loadActiveAlarms } from "./services/scheduler";
+import { migrate } from "drizzle-orm/bun-sqlite/migrator";
+import { db } from "./db";
+
+const app = new Hono();
+
+const corsOrigins = (
+  process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:3000"
+).split(",");
+
+app.use("*", logger());
+app.use(
+  "*",
+  cors({
+    origin: corsOrigins,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.route("/auth", auth);
+app.route("/alarms", alarmsRoute);
+app.route("/share", share);
+app.route("/ws", wsRoute);
+
+app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Wire up WebSocket broadcasting
+setWsBroadcast(broadcast);
+setBroadcast(broadcast);
+
+// Run migrations and load active alarms on startup
+try {
+  migrate(db, { migrationsFolder: "./drizzle" });
+  console.log("Database migrations applied");
+} catch (e) {
+  console.error("Migration error:", e);
+}
+
+loadActiveAlarms()
+  .then(() => console.log("Active alarms loaded into scheduler"))
+  .catch((e) => console.error("Failed to load active alarms:", e));
+
+const port = Number(process.env.PORT) || 3000;
+
+console.log(`Shared Alarm API running on port ${port}`);
+
+export default {
+  port,
+  fetch: app.fetch,
+  websocket,
+};

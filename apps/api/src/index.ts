@@ -16,7 +16,7 @@ const app = new Hono();
 const isProd = process.env.NODE_ENV === "production";
 
 const corsOrigins = (
-  process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:3000,http://localhost:8080"
+  process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:3001,http://localhost:8080"
 ).split(",");
 
 app.use("*", logger());
@@ -29,13 +29,17 @@ app.use(
   })
 );
 
-app.route("/auth", auth);
-app.route("/alarms", alarmsRoute);
-app.route("/share", share);
-app.route("/push", push);
-app.route("/ws", wsRoute);
+// Mount API routes at root (Flutter/direct) and /api (web app in production)
+const api = new Hono();
+api.route("/auth", auth);
+api.route("/alarms", alarmsRoute);
+api.route("/share", share);
+api.route("/push", push);
+api.route("/ws", wsRoute);
+api.get("/health", (c) => c.json({ status: "ok" }));
 
-app.get("/health", (c) => c.json({ status: "ok" }));
+app.route("/", api);
+app.route("/api", api);
 
 // In production, serve the web app static files
 if (isProd) {
@@ -60,7 +64,7 @@ loadActiveAlarms()
   .then(() => console.log("Active alarms loaded into scheduler"))
   .catch((e) => console.error("Failed to load active alarms:", e));
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 3001;
 
 console.log(`Shared Alarm API running on port ${port}`);
 

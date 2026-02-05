@@ -36,9 +36,9 @@ COPY --from=build-web /app/apps/web/dist/ ./public/
 RUN mkdir -p /app/data
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 ENV DATABASE_URL=./data/shared-alarm.db
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["bun", "run", "dist/index.js"]

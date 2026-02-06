@@ -172,16 +172,16 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
                   color: alarm.isActive
-                      ? Colors.green.withValues(alpha: 0.1)
+                      ? const Color(0xFF34D399).withValues(alpha: 0.1)
                       : alarm.isTriggered
-                          ? Colors.red.withValues(alpha: 0.1)
-                          : Colors.grey.withValues(alpha: 0.1),
+                          ? const Color(0xFFF87171).withValues(alpha: 0.1)
+                          : const Color(0xFF64748B).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   alarm.isActive ? l10n.statusActive : alarm.isTriggered ? l10n.statusTriggered : l10n.statusCancelled,
                   style: TextStyle(
-                    color: alarm.isActive ? Colors.green : alarm.isTriggered ? Colors.red : Colors.grey,
+                    color: alarm.isActive ? const Color(0xFF34D399) : alarm.isTriggered ? const Color(0xFFF87171) : const Color(0xFF64748B),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -202,25 +202,25 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
               Center(
                 child: Text(
                   l10n.targetLabel(formatter.format(targetLocal)),
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: Color(0xFF64748B)),
                 ),
               ),
             ] else if (alarm.isTriggered || isExpired) ...[
               const Center(
-                child: Icon(Icons.alarm_on, size: 80, color: Colors.red),
+                child: Icon(Icons.alarm_on, size: 80, color: Color(0xFFF87171)),
               ),
               const SizedBox(height: 16),
               Center(
                 child: Text(
                   l10n.alarmTriggered,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFFF87171)),
                 ),
               ),
             ] else ...[
               Center(
                 child: Text(
                   l10n.alarmCancelled,
-                  style: const TextStyle(fontSize: 20, color: Colors.grey),
+                  style: const TextStyle(fontSize: 20, color: Color(0xFF64748B)),
                 ),
               ),
             ],
@@ -250,21 +250,39 @@ class _AlarmDetailScreenState extends ConsumerState<AlarmDetailScreen> {
               Text(l10n.extensions,
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              ...alarm.extensions!.map((ext) => Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: const Icon(Icons.timer, color: Colors.blue),
-                      title: Text(ext.extendedByName),
-                      subtitle: Text(
-                        '+${ext.extensionMinutes} min',
-                        style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              ...alarm.extensions!.map((ext) {
+                final isReduction = ext.extensionMinutes < 0;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: (isReduction ? const Color(0xFFF87171) : const Color(0xFF818CF8)).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      trailing: Text(
-                        DateFormat('HH:mm').format(DateTime.parse(ext.createdAt).toLocal()),
-                        style: const TextStyle(color: Colors.grey),
+                      child: Icon(
+                        isReduction ? Icons.timer_off : Icons.timer,
+                        color: isReduction ? const Color(0xFFF87171) : const Color(0xFF818CF8),
+                        size: 20,
                       ),
                     ),
-                  )),
+                    title: Text(ext.extendedByName),
+                    subtitle: Text(
+                      '${ext.extensionMinutes > 0 ? "+" : ""}${ext.extensionMinutes} min',
+                      style: TextStyle(
+                        color: isReduction ? const Color(0xFFF87171) : const Color(0xFF34D399),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    trailing: Text(
+                      DateFormat('HH:mm').format(DateTime.parse(ext.createdAt).toLocal()),
+                      style: const TextStyle(color: Color(0xFF64748B)),
+                    ),
+                  ),
+                );
+              }),
             ],
 
             if (alarm.isActive) ...[

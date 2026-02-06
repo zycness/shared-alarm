@@ -63,5 +63,22 @@
   "language": "Language",
   "english": "English",
   "spanish": "Spanish",
-  "systemDefault": "System default"
+  "systemDefault": "System default",
+  "dismiss": "Dismiss",
+  "stopping": "Stopping...",
+  "snoozeMinutes": "Snooze {minutes} min",
+  "@snoozeMinutes": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "alarmRinging": "Your alarm is ringing!",
+  "snoozedWillRing": "Snoozed - will ring again in {minutes} minutes",
+  "@snoozedWillRing": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "failedLoadAlarms": "Failed to load alarms",
+  "errorOccurred": "An error occurred"
 }

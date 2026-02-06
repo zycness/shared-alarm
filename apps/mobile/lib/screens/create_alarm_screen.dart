@@ -161,11 +161,6 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _submitting ? null : _create,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
               child: _submitting
                   ? const SizedBox(
                       height: 20,

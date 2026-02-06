@@ -97,7 +97,7 @@ share.post(
       );
     }
 
-    if (extensionMinutes < alarm.minExtensionMinutes) {
+    if (Math.abs(extensionMinutes) < alarm.minExtensionMinutes) {
       return c.json(
         {
           error: "bad_request",
@@ -111,6 +111,18 @@ share.post(
     const newTime = new Date(
       new Date(alarm.targetTime).getTime() + extensionMinutes * 60 * 1000,
     ).toISOString();
+
+    if (extensionMinutes < 0 && new Date(newTime) <= new Date()) {
+      return c.json(
+        {
+          error: "bad_request",
+          message:
+            "Cannot reduce: the resulting time would be in the past",
+        },
+        400,
+      );
+    }
+
     const now = new Date().toISOString();
 
     await db

@@ -126,13 +126,13 @@ class _AlarmCard extends StatelessWidget {
   Color get _statusColor {
     switch (alarm.status) {
       case 'active':
-        return Colors.green;
+        return const Color(0xFF34D399);
       case 'triggered':
-        return Colors.red;
+        return const Color(0xFFF87171);
       case 'cancelled':
-        return Colors.grey;
+        return const Color(0xFF64748B);
       default:
-        return Colors.grey;
+        return const Color(0xFF64748B);
     }
   }
 

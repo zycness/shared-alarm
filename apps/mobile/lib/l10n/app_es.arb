@@ -42,5 +42,12 @@
   "language": "Idioma",
   "english": "Inglés",
   "spanish": "Español",
-  "systemDefault": "Predeterminado del sistema"
+  "systemDefault": "Predeterminado del sistema",
+  "dismiss": "Descartar",
+  "stopping": "Deteniendo...",
+  "snoozeMinutes": "Posponer {minutes} min",
+  "alarmRinging": "\u00a1Tu alarma est\u00e1 sonando!",
+  "snoozedWillRing": "Pospuesta - sonar\u00e1 de nuevo en {minutes} minutos",
+  "failedLoadAlarms": "Error al cargar las alarmas",
+  "errorOccurred": "Ha ocurrido un error"
 }

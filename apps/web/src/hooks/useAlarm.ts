@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { AlarmPublic, Extension } from "@shared-alarm/shared";
+import { t } from "../i18n";
 
 interface AlarmState {
   alarm: AlarmPublic | null;
@@ -26,14 +27,14 @@ export function useAlarm(token: string) {
       const res = await fetch(`/api/share/${token}`, { signal: controller.signal });
       if (!res.ok) {
         const err = await res.json();
-        setState((s) => ({ ...s, loading: false, error: err.message || "Failed to load alarm" }));
+        setState((s) => ({ ...s, loading: false, error: err.message || t("failedToLoad") }));
         return;
       }
       const data = await res.json();
       setState({ alarm: data.alarm, extensions: data.extensions, loading: false, error: null });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
-        setState((s) => ({ ...s, loading: false, error: "Network error" }));
+        setState((s) => ({ ...s, loading: false, error: t("networkError") }));
       }
     }
   }, [token]);

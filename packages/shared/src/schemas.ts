@@ -28,7 +28,7 @@ export type CreateAlarmRequest = z.infer<typeof CreateAlarmRequest>;
 
 export const ExtendAlarmRequest = z.object({
   extendedByName: z.string().min(1).max(100),
-  extensionMinutes: z.number().int().min(1),
+  extensionMinutes: z.number().int().refine((v) => v !== 0, "Must not be zero"),
 });
 export type ExtendAlarmRequest = z.infer<typeof ExtendAlarmRequest>;
 

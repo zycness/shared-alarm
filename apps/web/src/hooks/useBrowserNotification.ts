@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
+import { t } from "../i18n";
 
 export function useBrowserNotification(
   alarmLabel: string | null,
@@ -21,7 +22,7 @@ export function useBrowserNotification(
     if (!triggered || !alarmLabel) return;
     if (permissionRef.current !== "granted") return;
 
-    new Notification("Alarm Triggered!", {
+    new Notification(t("notificationTitle"), {
       body: alarmLabel,
     });
   }, [triggered, alarmLabel]);

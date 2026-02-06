@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../services/alarm_service.dart';
 
 class AlarmRingingScreen extends ConsumerStatefulWidget {
@@ -57,6 +58,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final now = DateTime.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
@@ -106,7 +108,7 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen>
                     onPressed: _dismissing ? null : _dismiss,
                     icon: const Icon(Icons.stop_circle, size: 32),
                     label: Text(
-                      _dismissing ? 'Stopping...' : 'Dismiss',
+                      _dismissing ? l10n.stopping : l10n.dismiss,
                       style: const TextStyle(fontSize: 20),
                     ),
                     style: FilledButton.styleFrom(
@@ -123,9 +125,9 @@ class _AlarmRingingScreenState extends ConsumerState<AlarmRingingScreen>
                   child: OutlinedButton.icon(
                     onPressed: _dismissing ? null : _snooze,
                     icon: const Icon(Icons.snooze, size: 28, color: Colors.white),
-                    label: const Text(
-                      'Snooze 5 min',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    label: Text(
+                      l10n.snoozeMinutes(5),
+                      style: const TextStyle(fontSize: 18, color: Colors.white),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white, width: 2),

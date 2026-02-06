@@ -1,52 +1,61 @@
 import { useState } from "react";
+import { t } from "../i18n";
 
 interface ExtensionFormProps {
   minMinutes: number;
+  targetTime: string;
   onExtend: (name: string, minutes: number) => Promise<void>;
   disabled: boolean;
 }
 
-export function ExtensionForm({ minMinutes, onExtend, disabled }: ExtensionFormProps) {
+export function ExtensionForm({ minMinutes, targetTime, onExtend, disabled }: ExtensionFormProps) {
   const [name, setName] = useState("");
   const [minutes, setMinutes] = useState(minMinutes);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const canReduce = () => {
+    const target = new Date(targetTime).getTime();
+    const reduced = target - minutes * 60 * 1000;
+    return reduced > Date.now();
+  };
+
+  const handleSubmit = async (direction: 1 | -1) => {
     if (!name.trim() || minutes < minMinutes) return;
 
     setSubmitting(true);
     setError(null);
     try {
-      await onExtend(name.trim(), minutes);
+      await onExtend(name.trim(), minutes * direction);
       setName("");
       setMinutes(minMinutes);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to extend");
+      setError(err instanceof Error ? err.message : t("failedToModify"));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+        <label htmlFor="name" className="block text-xs font-semibold text-indigo-300/60 uppercase tracking-wider mb-2">
+          {t("yourName")}
+        </label>
         <input
           id="name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Enter your name"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder={t("enterYourName")}
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
           required
           disabled={disabled || submitting}
         />
       </div>
       <div>
-        <label htmlFor="minutes" className="block text-sm font-medium text-gray-700 mb-1">
-          Minutes to extend (min: {minMinutes})
+        <label htmlFor="minutes" className="block text-xs font-semibold text-indigo-300/60 uppercase tracking-wider mb-2">
+          {t("minutesLabel")} (min: {minMinutes})
         </label>
         <input
           id="minutes"
@@ -54,19 +63,34 @@ export function ExtensionForm({ minMinutes, onExtend, disabled }: ExtensionFormP
           value={minutes}
           onChange={(e) => setMinutes(Number(e.target.value))}
           min={minMinutes}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all [&::-webkit-inner-spin-button]:opacity-50"
           required
           disabled={disabled || submitting}
         />
       </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-      <button
-        type="submit"
-        disabled={disabled || submitting || !name.trim() || minutes < minMinutes}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {submitting ? "Extending..." : "Extend Alarm"}
-      </button>
-    </form>
+      {error && (
+        <p className="text-rose-400 text-sm bg-rose-400/10 rounded-lg px-3 py-2 border border-rose-400/20">
+          {error}
+        </p>
+      )}
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={() => handleSubmit(1)}
+          disabled={disabled || submitting || !name.trim() || minutes < minMinutes}
+          className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-indigo-400 hover:to-violet-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-lg shadow-indigo-500/20"
+        >
+          {submitting ? "..." : `+${minutes} ${t("minUnit")}`}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSubmit(-1)}
+          disabled={disabled || submitting || !name.trim() || minutes < minMinutes || !canReduce()}
+          className="flex-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-rose-400 hover:to-orange-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-lg shadow-rose-500/20"
+        >
+          {submitting ? "..." : `-${minutes} ${t("minUnit")}`}
+        </button>
+      </div>
+    </div>
   );
 }

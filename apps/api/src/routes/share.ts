@@ -97,7 +97,7 @@ share.post(
       );
     }
 
-    if (Math.abs(extensionMinutes) < alarm.minExtensionMinutes) {
+    if (extensionMinutes > 0 && extensionMinutes < alarm.minExtensionMinutes) {
       return c.json(
         {
           error: "bad_request",

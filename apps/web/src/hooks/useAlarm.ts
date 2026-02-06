@@ -45,11 +45,16 @@ export function useAlarm(token: string) {
   }, [fetchAlarm]);
 
   const updateAlarm = useCallback((alarm: AlarmPublic, newExtension?: Extension) => {
-    setState((s) => ({
-      ...s,
-      alarm,
-      extensions: newExtension ? [newExtension, ...s.extensions] : s.extensions,
-    }));
+    setState((s) => {
+      let exts = s.extensions;
+      if (newExtension) {
+        const alreadyExists = s.extensions.some((e) => e.id === newExtension.id);
+        if (!alreadyExists) {
+          exts = [newExtension, ...s.extensions];
+        }
+      }
+      return { ...s, alarm, extensions: exts };
+    });
   }, []);
 
   return { ...state, refetch: fetchAlarm, updateAlarm };

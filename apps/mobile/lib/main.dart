@@ -27,11 +27,25 @@ class SharedAlarmApp extends ConsumerStatefulWidget {
   ConsumerState<SharedAlarmApp> createState() => _SharedAlarmAppState();
 }
 
-class _SharedAlarmAppState extends ConsumerState<SharedAlarmApp> {
+class _SharedAlarmAppState extends ConsumerState<SharedAlarmApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _listenAlarmRing();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkActiveAlarms();
+    }
   }
 
   void _listenAlarmRing() {
@@ -40,22 +54,29 @@ class _SharedAlarmAppState extends ConsumerState<SharedAlarmApp> {
     });
 
     // Check if an alarm is already ringing (app opened from full-screen intent)
-    Future.delayed(const Duration(milliseconds: 500), () async {
-      final active = await AlarmService.getActiveAlarms();
-      if (active.isNotEmpty) {
-        final alarm = active.first;
-        // If alarm dateTime is in the past or within 5 seconds, it's ringing now
-        if (alarm.dateTime.isBefore(DateTime.now().add(const Duration(seconds: 5)))) {
-          _navigateToRinging(alarm);
-        }
+    Future.delayed(const Duration(seconds: 1), () => _checkActiveAlarms());
+  }
+
+  Future<void> _checkActiveAlarms() async {
+    final active = await AlarmService.getActiveAlarms();
+    if (active.isNotEmpty) {
+      final alarm = active.first;
+      // Any alarm with a dateTime in the past is currently ringing
+      if (alarm.dateTime.isBefore(DateTime.now().add(const Duration(seconds: 10)))) {
+        _navigateToRinging(alarm);
       }
-    });
+    }
   }
 
   void _navigateToRinging(AlarmSettings alarmSettings) {
+    if (!mounted) return;
     final router = ref.read(routerProvider);
-    final currentLocation = router.routerDelegate.currentConfiguration.last.matchedLocation;
-    if (currentLocation.startsWith('/alarm-ringing')) return; // already there
+    try {
+      final currentLocation = router.routerDelegate.currentConfiguration.last.matchedLocation;
+      if (currentLocation.startsWith('/alarm-ringing')) return;
+    } catch (_) {
+      // Router not ready yet, proceed with navigation
+    }
     router.push(
       '/alarm-ringing/${alarmSettings.id}?label=${Uri.encodeComponent(alarmSettings.notificationSettings.title)}',
     );

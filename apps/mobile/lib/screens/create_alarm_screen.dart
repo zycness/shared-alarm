@@ -93,6 +93,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.createAlarm)),
@@ -105,21 +106,20 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
               controller: _labelController,
               decoration: InputDecoration(
                 labelText: l10n.alarmLabel,
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.label),
+                prefixIcon: const Icon(Icons.label_outline),
               ),
             ),
-            const SizedBox(height: 24),
-            Text(l10n.targetDateTime, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 32),
+            Text(l10n.targetDateTime, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _pickDate,
-                    icon: const Icon(Icons.calendar_today),
+                    icon: const Icon(Icons.calendar_today, size: 18),
                     label: Text(
-                      '${_targetDate.month}/${_targetDate.day}/${_targetDate.year}',
+                      '${_targetDate.day}/${_targetDate.month}/${_targetDate.year}',
                     ),
                   ),
                 ),
@@ -127,36 +127,80 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _pickTime,
-                    icon: const Icon(Icons.access_time),
+                    icon: const Icon(Icons.access_time, size: 18),
                     label: Text(_targetTime.format(context)),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            Text(l10n.minExtensionMinutes, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                IconButton(
-                  onPressed: _minExtensionMinutes > 1
-                      ? () => setState(() => _minExtensionMinutes--)
-                      : null,
-                  icon: const Icon(Icons.remove_circle_outline),
-                ),
-                Text(
-                  '$_minExtensionMinutes',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => _minExtensionMinutes++),
-                  icon: const Icon(Icons.add_circle_outline),
-                ),
-              ],
+            const SizedBox(height: 32),
+            Text(l10n.minExtensionMinutes, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF334155)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    '$_minExtensionMinutes min',
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.primary,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SliderTheme(
+                    data: SliderThemeData(
+                      activeTrackColor: theme.colorScheme.primary,
+                      inactiveTrackColor: const Color(0xFF334155),
+                      thumbColor: theme.colorScheme.primary,
+                      overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                      trackHeight: 6,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                    ),
+                    child: Slider(
+                      value: _minExtensionMinutes.toDouble(),
+                      min: 1,
+                      max: 60,
+                      divisions: 59,
+                      label: '$_minExtensionMinutes',
+                      onChanged: (v) => setState(() => _minExtensionMinutes = v.round()),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('1', style: TextStyle(fontSize: 12, color: const Color(0xFF64748B))),
+                        Text('60', style: TextStyle(fontSize: 12, color: const Color(0xFF64748B))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (_error != null) ...[
               const SizedBox(height: 16),
-              Text(_error!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
             const SizedBox(height: 32),
             ElevatedButton(
@@ -167,7 +211,7 @@ class _CreateAlarmScreenState extends ConsumerState<CreateAlarmScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
-                  : Text(l10n.createAlarm, style: const TextStyle(fontSize: 16)),
+                  : Text(l10n.createAlarm, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             ),
           ],
         ),

@@ -10,25 +10,32 @@ interface ExtensionFormProps {
 
 export function ExtensionForm({ minMinutes, targetTime, onExtend, disabled }: ExtensionFormProps) {
   const [name, setName] = useState("");
-  const [minutes, setMinutes] = useState(minMinutes);
+  const [minutesText, setMinutesText] = useState(String(minMinutes));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const minutes = parseInt(minutesText, 10) || 0;
+
+  const canExtend = minutes >= minMinutes;
+
   const canReduce = () => {
+    if (minutes < 1) return false;
     const target = new Date(targetTime).getTime();
     const reduced = target - minutes * 60 * 1000;
     return reduced > Date.now();
   };
 
   const handleSubmit = async (direction: 1 | -1) => {
-    if (!name.trim() || minutes < minMinutes) return;
+    if (!name.trim() || minutes < 1) return;
+    if (direction === 1 && !canExtend) return;
+    if (direction === -1 && !canReduce()) return;
 
     setSubmitting(true);
     setError(null);
     try {
       await onExtend(name.trim(), minutes * direction);
       setName("");
-      setMinutes(minMinutes);
+      setMinutesText(String(minMinutes));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("failedToModify"));
     } finally {
@@ -55,15 +62,22 @@ export function ExtensionForm({ minMinutes, targetTime, onExtend, disabled }: Ex
       </div>
       <div>
         <label htmlFor="minutes" className="block text-xs font-semibold text-indigo-300/60 uppercase tracking-wider mb-2">
-          {t("minutesLabel")} (min: {minMinutes})
+          {t("minutesLabel")}
         </label>
         <input
           id="minutes"
-          type="number"
-          value={minutes}
-          onChange={(e) => setMinutes(Number(e.target.value))}
-          min={minMinutes}
-          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all [&::-webkit-inner-spin-button]:opacity-50"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={minutesText}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === "" || /^\d+$/.test(v)) {
+              setMinutesText(v);
+            }
+          }}
+          onFocus={(e) => e.target.select()}
+          className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/25 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all"
           required
           disabled={disabled || submitting}
         />
@@ -77,18 +91,18 @@ export function ExtensionForm({ minMinutes, targetTime, onExtend, disabled }: Ex
         <button
           type="button"
           onClick={() => handleSubmit(1)}
-          disabled={disabled || submitting || !name.trim() || minutes < minMinutes}
+          disabled={disabled || submitting || !name.trim() || !canExtend}
           className="flex-1 bg-gradient-to-r from-indigo-500 to-violet-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-indigo-400 hover:to-violet-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-lg shadow-indigo-500/20"
         >
-          {submitting ? "..." : `+${minutes} ${t("minUnit")}`}
+          {submitting ? "..." : `+${minutes || 0} ${t("minUnit")}`}
         </button>
         <button
           type="button"
           onClick={() => handleSubmit(-1)}
-          disabled={disabled || submitting || !name.trim() || minutes < minMinutes || !canReduce()}
+          disabled={disabled || submitting || !name.trim() || !canReduce()}
           className="flex-1 bg-gradient-to-r from-rose-500 to-orange-500 text-white py-3 px-4 rounded-xl font-semibold hover:from-rose-400 hover:to-orange-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-[0.98] shadow-lg shadow-rose-500/20"
         >
-          {submitting ? "..." : `-${minutes} ${t("minUnit")}`}
+          {submitting ? "..." : `-${minutes || 0} ${t("minUnit")}`}
         </button>
       </div>
     </div>
